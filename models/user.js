@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+const bcrypt=require("bcrypt")
+const jwt=require("jsonwebtoken")
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
+    username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     isVerified: { type: Boolean, default: false },           // email verification
@@ -32,10 +34,8 @@ userSchema.statics.compareOtp = async (otp, hashedOtp) => {
 
 // Generate JWT
 userSchema.statics.generateAuthToken = (userId) => {
-    return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "5d" });
+    return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
-
-
 
 const userModel = mongoose.model("User", userSchema);
 module.exports = userModel;
