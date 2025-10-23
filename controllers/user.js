@@ -1,4 +1,5 @@
 const userModel = require("../models/user")
+const BlacklistToken = require("../models/blacklist")
 // const expenseModel = require("../models/expense")
 // const mongoose = require("mongoose")
 
@@ -48,5 +49,79 @@ module.exports.loginUser = async (req, res, next) => {
     }
     catch (error) {
         res.status(500).json({ message: error.message })
+    }
+}
+
+module.exports.logoutUser = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        await BlacklistToken.create({ token })
+
+        res.status(200).json({ message: "Logged Out Successful!" })
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+module.exports.getUserProfile = async (req, res, next) => {
+    try {
+        const { username, email, avatar, role, createdAt, _id } = req.user
+        res.status(200).json({ user: { username, email, avatar, role, createdAt, _id } })
+    }
+    catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+module.exports.getAllUsers = async (req, res, next) => {
+    try {
+        const { role } = req.user
+
+        if (role !== "admin") {
+            res.status(403).json({ message: "Forbidden: Admins only" })
+        }
+        const allUsers = await userModel.find({}, { _id: 0, username: 1, email: 1, isVerified: 1, avatar: 1, createdAt: 1 })
+        res.status(200).json({ users: allUsers, count: allUsers.length })
+    }
+    catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+module.exports.updateProfile = async (req, res, next) => {
+    try {
+        const { username, email, avatar } = req.body
+        const userId = req.user._id
+
+        const updateData = {};
+
+        if (username) updateData.username = username
+        if (email) updateData.email = email
+        if (avatar) updateData.avatar.avatar
+
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({
+            message: "Profile updated successfully!",
+            user: updatedUser,
+        });
+    }
+    catch (error) {
+        return res.status(500).json({ error: error.message })
     }
 }
