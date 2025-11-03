@@ -1,11 +1,4 @@
 const Delivery = require("../models/delivery");
-const data = await Delivery.find(filters).sort({ date: -1 });
-
-if (data.length === 0) {
-    return res.status(404).json({ message: "No delivery records found!" });
-}
-
-res.status(200).json({ data });
 
 module.exports.addDelivery = async (req, res, next) => {
     try {
