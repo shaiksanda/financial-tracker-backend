@@ -8,4 +8,4 @@ router.post("/add-delivery",authenticateUser,addDelivery)
 router.put("/update-delivery:id",authenticateUser,updateDelivery)
 router.delete("delete-delivery/:id",authenticateUser,deleteDelivery)
 
-export default router
+module.exports= router
