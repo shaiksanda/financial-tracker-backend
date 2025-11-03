@@ -1,5 +1,11 @@
 const Delivery = require("../models/delivery");
-const { findById, findByIdAndDelete } = require("../models/user");
+const data = await Delivery.find(filters).sort({ date: -1 });
+
+if (data.length === 0) {
+    return res.status(404).json({ message: "No delivery records found!" });
+}
+
+res.status(200).json({ data });
 
 module.exports.addDelivery = async (req, res, next) => {
     try {
@@ -77,6 +83,27 @@ module.exports.deleteDelivery = async (req, res, next) => {
         }
 
         res.status(200).json({ message: "Delivery Record Deleted Successfully!" })
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+module.exports.getDeliveryData = async (req, res, next) => {
+    try {
+        const { date } = req.query
+
+        const userId = req.user._id
+        const filters = { userId }
+        if (date) filters.date = date
+        const deliveryRecords = await Delivery.find(filters).sort({ date: -1 });
+
+        if (deliveryRecords.length === 0) {
+            return res.status(404).json({ message: "No delivery records found!" });
+        }
+
+        res.status(200).json({ deliveryRecords });
+
     }
     catch (error) {
         res.status(500).json({ message: error.message })
