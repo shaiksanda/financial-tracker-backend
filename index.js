@@ -4,6 +4,7 @@ require("dotenv").config()
 const connectToMongodb=require("./db/index")
 const userRoutes=require("./routes/user")
 const expenseRoutes=require("./routes/expense")
+const deliveryRoutes=require("./routes/delivery")
 
 const app=express()
 app.use(express.json())
@@ -15,6 +16,7 @@ connectToMongodb()
 let port=process.env.PORT ?? 6002
 app.use("/users",userRoutes)
 app.use("/expense",expenseRoutes)
+app.use("/delivery",deliveryRoutes)
 
 app.get("/",(req,res)=>{
     res.send("My Expense Tracker Is Live!!!")
