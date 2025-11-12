@@ -20,9 +20,10 @@ module.exports.registerUser = async (req, res, next) => {
 
         const hashedPassword = await userModel.hashPassword(password);
         const user = await userModel.create({ username, email, password: hashedPassword });
+        const userDetails = { username: user.username, role: user.role, avatar: user.avatar }
 
         const token = userModel.generateAuthToken(user._id);
-        res.status(201).json({ token, user });
+        res.status(201).json({ token, userDetails, message: "User Registered Successfully!" });
     }
     catch (error) {
         res.status(500).json({ message: error.message });
@@ -45,7 +46,8 @@ module.exports.loginUser = async (req, res, next) => {
         }
 
         const token = await userModel.generateAuthToken(existingUser._id)
-        return res.status(200).json({ token, existingUser })
+        const userDetails = { username: existingUser.username, role: existingUser.role, avatar: existingUser.avatar }
+        return res.status(200).json({ token, userDetails, message: "Login Successful!" })
     }
     catch (error) {
         res.status(500).json({ message: error.message })
@@ -63,7 +65,7 @@ module.exports.logoutUser = async (req, res, next) => {
         const token = authHeader.split(" ")[1];
         await BlacklistToken.create({ token })
 
-        res.status(200).json({ message: "Logged Out Successful!" })
+        res.status(200).json({ message: "Logged Out Successfully!" })
     }
     catch (error) {
         res.status(500).json({ message: error.message })
@@ -123,5 +125,26 @@ module.exports.updateProfile = async (req, res, next) => {
     }
     catch (error) {
         return res.status(500).json({ error: error.message })
+    }
+}
+
+module.exports.deleteProfile = async (req, res, next) => {
+    try {
+        const { role } = req.user
+        const { id } = req.params
+
+        if (role !== "admin") {
+            return res.status(403).json({ message: "You are not authorized to perform this action." })
+        }
+
+        const deletedUser = await userModel.findByIdAndDelete(id)
+
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found." })
+        }
+
+        res.status(200).json({ message: "Profile deleted successfully!" })
+    } catch (error) {
+        res.status(500).json({ message: error.message })
     }
 }
