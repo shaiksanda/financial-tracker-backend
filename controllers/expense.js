@@ -56,7 +56,7 @@ module.exports.getExpenses = async (req, res, next) => {
     try {
         const userId = req.user._id
 
-        const { month, year, type, category } = req.query;
+        const { month, year, type, category, limit } = req.query;
 
         let filters = { userId };
 
@@ -65,8 +65,14 @@ module.exports.getExpenses = async (req, res, next) => {
         if (type) filters.type = type;
         if (category) filters.category = category;
 
-        const expenses = await expenseModel.find(filters).sort({date:-1})
-        res.status(200).json({ expenses,count:expenses.length })
+        let query = expenseModel.find(filters).sort({ date: -1 })
+
+        if (limit) {
+            query = query.limit(Number(limit));
+        }
+
+        const expenses=await query;
+        res.status(200).json({ expenses, count: expenses.length })
     }
     catch (error) {
         return res.status(500).json({ message: error.message })
