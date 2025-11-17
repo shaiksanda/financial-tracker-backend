@@ -56,22 +56,33 @@ module.exports.getExpenses = async (req, res, next) => {
     try {
         const userId = req.user._id
 
-        const { month, year, type, category, limit } = req.query;
-
+        const { days, type, category, limit, sortBy = "date", order = "desc" } = req.query;
         let filters = { userId };
+        if (days) {
+            const n = Number(days);
+            const to = new Date();
+            const from = new Date();
+            from.setDate(to.getDate() - n);
 
-        if (month) filters.month = month;
-        if (year) filters.year = year;
+            filters.date = { $gte: from, $lte: to };
+        }
+
+        
+
         if (type) filters.type = type;
         if (category) filters.category = category;
+        const sortDirection = order === "asc" ? 1 : -1;
+        const sortOptions = {
+            [sortBy]: sortDirection,
+        };
 
-        let query = expenseModel.find(filters).sort({ date: -1 })
+        let query = expenseModel.find(filters).sort(sortOptions)
 
         if (limit) {
             query = query.limit(Number(limit));
         }
 
-        const expenses=await query;
+        const expenses = await query;
         res.status(200).json({ expenses, count: expenses.length })
     }
     catch (error) {
