@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-
+//hash password
 userSchema.statics.hashPassword = async (password) => {
   return bcrypt.hash(password, 10);
 };
@@ -20,15 +20,6 @@ userSchema.statics.hashPassword = async (password) => {
 userSchema.statics.comparePassword = async (password, hashedPassword) => {
   return bcrypt.compare(password, hashedPassword);
 };
-
-
-// userSchema.statics.hashOtp = async (otp) => {
-//   return bcrypt.hash(otp, 10);
-// };
-// // Compare password
-// userSchema.statics.compareOtp = async (otp, hashedOtp) => {
-//   return bcrypt.compare(otp, hashedOtp);
-// };
 
 // Generate JWT
 userSchema.statics.generateAuthToken = (userId) => {

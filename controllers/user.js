@@ -115,12 +115,11 @@ module.exports.updateProfile = async (req, res, next) => {
         );
 
         if (!updatedUser) {
-            return res.status(404).json({ success: false, message: "User not found" });
+            return res.status(404).json({ message: "User not found" });
         }
 
         res.status(200).json({
             message: "Profile updated successfully!",
-            user: updatedUser,
         });
     }
     catch (error) {
@@ -131,9 +130,10 @@ module.exports.updateProfile = async (req, res, next) => {
 module.exports.deleteProfile = async (req, res, next) => {
     try {
         const { role } = req.user
+        const userId=req.user._id
         const { id } = req.params
 
-        if (role !== "admin") {
+        if (role !== "admin" && userId!==id) {
             return res.status(403).json({ message: "You are not authorized to perform this action." })
         }
 
