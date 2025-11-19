@@ -5,7 +5,7 @@ const { authenticateUser } = require("../middlewares/auth")
 
 router.post("/register",registerUser)
 router.post("/login",loginUser)
-router.get("/logout",logoutUser)
+router.post("/logout",logoutUser)
 
 router.get("/profile",authenticateUser,getUserProfile)
 router.put("/update-profile",authenticateUser,updateProfile)
