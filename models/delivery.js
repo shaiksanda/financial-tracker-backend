@@ -4,32 +4,25 @@ const mongoose = require("mongoose");
 const deliverySchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User", 
+        ref: "User",
         required: true,
     },
     date: { type: Date, required: true },
-    totalKm: { type: Number, required: true },
-    petrolCost: { type: Number, required: true },
-    totalOrders: { type: Number, required: true },
-    totalEarnings: {
+    timeTaken: { type: Number, required: true },
+    dropLocation: { type: String, required: true },
+    distance: { type: Number, required: true },
+    petrolPrice: { type: Number, default: 110 },   // fixed for now
+    mileage: { type: Number, default: 45 },   // fixed for now
+    petrolCostPerDelivery: {
         type: Number,
-        required: true,
+        required: true, // auto-calculated: distance / mileage * petrolPrice
     },
-
-    highestOrderPrice: {
-        type: Number,
-        default: 0,
+    earnings:{
+        type:Number,required:true, //direct blinkt earnings
     },
-    lowestOrderPrice: {
-        type: Number,
-        default: 0,
-    },
-    profit: {
-        type: Number,
-        default: function () {
-            // auto-calculate profit if both values exist
-            return this.totalEarnings - this.petrolCost;
-        },
+    status: {
+        type: String,
+        enum: ["completed", "cancelled", "pending"],
     },
     notes: {
         type: String,
@@ -39,4 +32,4 @@ const deliverySchema = new mongoose.Schema({
 
 const Delivery = mongoose.model("Deliver", deliverySchema);
 
-module.exports=Delivery;
+module.exports = Delivery;
