@@ -5,6 +5,7 @@ module.exports.addDelivery = async (req, res, next) => {
     try {
         const {
             date,
+            customerName,
             timeTaken, dropLocation, distance,
             earnings,
             status,
@@ -12,11 +13,14 @@ module.exports.addDelivery = async (req, res, next) => {
         const userId = req.user._id
         const mileage = 45;
         const petrolPrice = 110;
-        const petrolCostPerDelivery = (Number(distance) / mileage) * petrolPrice
+        const petrolCostPerDelivery =
+            Number(((Number(distance) / mileage) * petrolPrice).toFixed(2));
+
 
         await Delivery.create({
             userId,
             date,
+            customerName,
             timeTaken: Number(timeTaken),
             distance: Number(distance),
             dropLocation,
@@ -128,8 +132,9 @@ module.exports.getDeliveryData = async (req, res, next) => {
         if (deliveryRecords.length === 0) {
             return res.status(404).json({ message: "No delivery records found!" });
         }
+        
 
-        res.status(200).json({ deliveryRecords });
+        res.status(200).json(deliveryRecords );
 
     }
     catch (error) {

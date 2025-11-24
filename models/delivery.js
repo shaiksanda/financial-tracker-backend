@@ -7,6 +7,7 @@ const deliverySchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
+    customerName:{type:String,require:true},
     date: { type: Date, required: true },
     timeTaken: { type: Number, required: true },
     dropLocation: { type: String, required: true },
