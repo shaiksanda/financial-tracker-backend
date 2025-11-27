@@ -165,7 +165,7 @@ module.exports.todayPerformance = async (req, res, next) => {
         const todayRecords = await Delivery.find(filters
         );
 
-         if (totalRecords.length === 0) {
+         if (todayRecords.length === 0) {
             return res.status(404).json({ message: "No delivery records found!" });
         }
 
