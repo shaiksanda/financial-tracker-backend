@@ -1,4 +1,4 @@
-const MailMessage = require("nodemailer/lib/mailer/mail-message");
+
 const Delivery = require("../models/delivery");
 
 module.exports.addDelivery = async (req, res, next) => {
@@ -132,12 +132,65 @@ module.exports.getDeliveryData = async (req, res, next) => {
         if (deliveryRecords.length === 0) {
             return res.status(404).json({ message: "No delivery records found!" });
         }
-        
 
-        res.status(200).json(deliveryRecords );
+
+        res.status(200).json(deliveryRecords);
 
     }
     catch (error) {
         res.status(500).json({ message: error.message })
     }
 }
+
+module.exports.todayPerformance = async (req, res, next) => {
+    try {
+        const userId = req.user._id
+        const filters = { userId }
+
+        for (let key in req.query) {
+            let value = req.query[key];
+            if (typeof value === "string" && value.startsWith("$")) {
+                return res.status(400).json({ message: "Invalid query value" });
+            }
+        }
+
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        filters.date = { $gte: start, $lt: end }
+
+
+        const todayRecords = await Delivery.find(filters
+        );
+
+        const totalTrips = todayRecords.length;
+
+        const totalKm = Number(todayRecords.reduce((sum, r) => sum + (r.distance || 0), 0).toFixed(2));
+
+        const totalEarnings = Number(todayRecords.reduce(
+            (sum, r) => sum + (r.earnings || 0),
+            0
+        ).toFixed(2));
+
+        const totalPetrolCost = Number(todayRecords.reduce(
+            (sum, r) => sum + (r.petrolCostPerDelivery || 0),
+            0
+        ).toFixed(2));
+
+        res.json({
+            totalTrips,
+            totalKm,
+            totalEarnings,
+            totalPetrolCost,
+            records: todayRecords,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+
+
