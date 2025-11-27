@@ -165,6 +165,12 @@ module.exports.todayPerformance = async (req, res, next) => {
         const todayRecords = await Delivery.find(filters
         );
 
+         if (totalRecords.length === 0) {
+            return res.status(404).json({ message: "No delivery records found!" });
+        }
+
+        
+
         const totalTrips = todayRecords.length;
 
         const totalKm = Number(todayRecords.reduce((sum, r) => sum + (r.distance || 0), 0).toFixed(2));
