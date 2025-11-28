@@ -1,6 +1,7 @@
 const userModel = require("../models/user")
 const BlacklistToken = require("../models/blacklist")
 const expenseModel = require("../models/expense")
+const Delivery = require("../models/delivery");
 const mongoose = require("mongoose")
 
 
@@ -74,34 +75,69 @@ module.exports.logoutUser = async (req, res, next) => {
 
 module.exports.getUserProfile = async (req, res, next) => {
     try {
-        const { username, email, avatar, role, createdAt } = req.user
-        const userId = req.user._id
+        const userId = req.user?._id;
+        if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-        const totalExpenses = await expenseModel.aggregate([{ $match: { userId, type: "expense" } }, { $group: { _id: null, totalExpenses: { $sum: "$amount" } } }, { $project: { _id: 0, totalExpenses: 1 } }])
+        const { username, email, avatar, role, createdAt } = req.user;
 
-        const totalIncome = await expenseModel.aggregate([{ $match: { userId, type: "income" } }, { $group: { _id: null, totalIncome: { $sum: "$amount" } } }, { $project: { _id: 0, totalIncome: 1 } }])
+        // Run both aggregations in parallel
+        const [financeSummary, deliverySummary] = await Promise.all([
+            expenseModel.aggregate([
+                { $match: { userId } },
+                {
+                    $group: {
+                        _id: null,
+                        totalExpensesRaw: { $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] } },
+                        totalIncomeRaw: { $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] } },
+                        totalSavingsRaw: { $sum: { $cond: [{ $eq: ["$type", "savings"] }, "$amount", 0] } }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        totalExpenses: { $round: ["$totalExpensesRaw", 2] },
+                        totalIncome: { $round: ["$totalIncomeRaw", 2] },
+                        totalSavings: { $round: ["$totalSavingsRaw", 2] }
+                    }
+                }
+            ]),
+            Delivery.aggregate([
+                { $match: { userId } },
+                {
+                    $group: {
+                        _id: null,
+                        totalTrips: { $sum: 1 },
+                        totalKms: { $sum: "$distance" },
+                        totalEarnings: { $sum: "$earnings" },
+                        totalPetrolCost: { $sum: "$petrolCostPerDelivery" }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        totalTrips: 1,
+                        totalKms: { $round: ["$totalKms", 2] },
+                        totalEarnings: { $round: ["$totalEarnings", 2] },
+                        totalPetrolCost: { $round: ["$totalPetrolCost", 2] }
+                    }
+                }
+            ])
+        ]);
 
-        const totalSavings = await expenseModel.aggregate([{ $match: { userId, type: "savings" } }, { $group: { _id: null, totalSavings: { $sum: "$amount" } } }, { $project: { _id: 0, totalSavings: 1 } }])
+        const finance = financeSummary[0] || { totalExpenses: 0, totalIncome: 0, totalSavings: 0 };
+        const delivery = deliverySummary[0] || { totalTrips: 0, totalKms: 0, totalEarnings: 0, totalPetrolCost: 0 };
 
-        const topCategory = await expenseModel.aggregate([{ $match: { userId, type: "expense" } }, { $group: { _id: "$category", total: { $sum: "$amount" } } }, { $sort: { total: -1 } }, { $limit: 1 }, {
-            $project: {
-                _id: 0,
-                category: "$_id",
-                total: 1
-            }
-        }])
+        res.status(200).json({
+            user: { username, email, avatar, role, createdAt, userId },
+            finance,
+            delivery
+        });
 
-        const expenses = totalExpenses[0]?.totalExpenses || 0;
-        const income = totalIncome[0]?.totalIncome || 0;
-        const savings = totalSavings[0]?.totalSavings || 0;
-        const bestCategory = topCategory[0] || { category: null, total: 0 };
-
-        res.status(200).json({ user: { username, email, avatar, role, createdAt, userId},finance:{expenses,income,savings,topCategory:bestCategory} })
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
     }
-    catch (error) {
-        return res.status(500).json({ message: error.message })
-    }
-}
+};
 
 module.exports.getAllUsers = async (req, res, next) => {
     try {
