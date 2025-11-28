@@ -56,7 +56,7 @@ module.exports.getExpenses = async (req, res, next) => {
     try {
         const userId = req.user._id
 
-        const { days, type, category, limit, sortByDate, sortDateOrder, sortByAmount, sortAmountOrder,date } = req.query;
+        const { days, type, category, limit, sortByDate, sortDateOrder, sortByAmount, sortAmountOrder, date } = req.query;
         let filters = { userId };
         if (days) {
             const n = Number(days);
@@ -68,7 +68,7 @@ module.exports.getExpenses = async (req, res, next) => {
         }
 
 
-        if (date) filters.date=date
+        if (date) filters.date = date
         if (type) filters.type = type;
         if (category) filters.category = category;
 
@@ -94,5 +94,54 @@ module.exports.getExpenses = async (req, res, next) => {
     }
     catch (error) {
         return res.status(500).json({ message: error.message })
+    }
+}
+
+module.exports.headerSummary = async (req, res) => {
+    try {
+        const userId = req.user._id
+        const summary = await expenseModel.aggregate([
+            { $match: { userId } },
+
+            {
+                $group: {
+                    _id: null,
+                    totalExpensesRaw: {
+                        $sum: {
+                            $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0]
+                        }
+                    },
+                    totalIncomeRaw: {
+                        $sum: {
+                            $cond: [{ $eq: ["$type", "income"] }, "$amount", 0]
+                        }
+                    },
+                    totalSavingsRaw: {
+                        $sum: {
+                            $cond: [{ $eq: ["$type", "savings"] }, "$amount", 0]
+                        }
+                    }
+                }
+            },
+
+            {
+                $project: {
+                    _id: 0,
+                    totalExpenses: { $round: ["$totalExpensesRaw", 2] },
+                    totalIncome: { $round: ["$totalIncomeRaw", 2] },
+                    totalSavings: { $round: ["$totalSavingsRaw", 2] }
+                }
+            }
+        ]);
+
+        return res.json(summary[0] || {
+            totalExpenses: 0,
+            totalIncome: 0,
+            totalSavings: 0
+        });
+
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message })
     }
 }
