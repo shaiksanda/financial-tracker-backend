@@ -81,6 +81,7 @@ module.exports.deleteDelivery = async (req, res, next) => {
 
 module.exports.getDeliveryData = async (req, res, next) => {
     try {
+        const allowedFields = ["earnings", "distance", "timeTaken", "date"];
         const { date, days, status, sortByEarnings, earningsOrder, sortByDistance, distanceOrder,
             sortByTimeTaken, timeTakenOrder,
             sortByDate, dateOrder } = req.query
@@ -88,7 +89,7 @@ module.exports.getDeliveryData = async (req, res, next) => {
         const userId = req.user._id
         const filters = { userId }
         if (date) {
-            filters.date = date;
+            filters.date = new Date(date);
         }
 
         if (days) {
@@ -100,26 +101,25 @@ module.exports.getDeliveryData = async (req, res, next) => {
             filters.date = { $gte: from, $lte: to };
         }
 
-        if (status) {
+        if (status && !status.startsWith("$")) {
             filters.status = status;
         }
 
-
         const sortOptions = {}
 
-        if (sortByEarnings) {
+        if (allowedFields.includes(sortByEarnings)) {
             sortOptions[sortByEarnings] = earningsOrder === "asc" ? 1 : -1
         }
 
-        if (sortByDistance) {
+        if (allowedFields.includes(sortByDistance)) {
             sortOptions[sortByDistance] = distanceOrder === "asc" ? 1 : -1;
         }
 
-        if (sortByTimeTaken) {
+        if (allowedFields.includes(sortByTimeTaken)) {
             sortOptions[sortByTimeTaken] = timeTakenOrder === "asc" ? 1 : -1;
         }
 
-        if (sortByDate) {
+        if (allowedFields.includes(sortByDate)) {
             sortOptions[sortByDate] = dateOrder === "asc" ? 1 : -1;
         }
 
@@ -129,12 +129,17 @@ module.exports.getDeliveryData = async (req, res, next) => {
 
         const deliveryRecords = await Delivery.find(filters).sort(sortOptions);
 
+        const totalTrips = deliveryRecords.length
+        const totalKms = Number(deliveryRecords.reduce((sum, item) => sum + (item.distance || 0), 0)).toFixed(2)
+        const totalEarnings = Number(deliveryRecords.reduce((sum, item) => sum + (item.totalEarnings || 0), 0)).toFixed(2)
+        const totalPetrolCost = Number(deliveryRecords.reduce((sum, item) => sum + (item.petrolCostPerDelivery || 0), 0)).toFixed(2)
+
         if (deliveryRecords.length === 0) {
             return res.status(404).json({ message: "No delivery records found!" });
         }
 
 
-        res.status(200).json(deliveryRecords);
+        res.status(200).json({ deliveryRecords, totalEarnings, totalKms, totalTrips, totalPetrolCost });
 
     }
     catch (error) {
@@ -165,11 +170,11 @@ module.exports.todayPerformance = async (req, res, next) => {
         const todayRecords = await Delivery.find(filters
         );
 
-         if (todayRecords.length === 0) {
+        if (todayRecords.length === 0) {
             return res.status(404).json({ message: "No delivery records found!" });
         }
 
-        
+
 
         const totalTrips = todayRecords.length;
 
