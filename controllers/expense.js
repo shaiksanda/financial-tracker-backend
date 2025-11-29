@@ -54,9 +54,11 @@ module.exports.deleteExpense = async (req, res, next) => {
 
 module.exports.getExpenses = async (req, res, next) => {
     try {
+        const allowedFields = ["date", "amount"]
+        const allowedTypes = ["income", "expense", "savings"];
         const userId = req.user._id
 
-        const { days, type, category, limit, sortByDate, sortDateOrder, sortByAmount, sortAmountOrder, date } = req.query;
+        const { days, type, category, sortByDate, sortDateOrder, sortByAmount, sortAmountOrder, date } = req.query;
         let filters = { userId };
         if (days) {
             const n = Number(days);
@@ -67,30 +69,39 @@ module.exports.getExpenses = async (req, res, next) => {
             filters.date = { $gte: from, $lte: to };
         }
 
-
-        if (date) filters.date = date
-        if (type) filters.type = type;
-        if (category) filters.category = category;
+        if (date) filters.date = new Date(date)
+        if (type && allowedTypes.includes(type)) {
+            filters.type = type;
+        }
+        if (category && !category.startsWith("$")) filters.category = category;
 
 
         const sortOptions = {};
 
-        if (sortByDate) {
-            sortOptions[sortByDate] = sortDateOrder === "asc" ? 1 : -1;
+        if (allowedFields.includes(sortByDate)) {
+            sortOptions[sortByDate] = (sortDateOrder === "asc") ? 1 : -1;
         }
 
-        if (sortByAmount) {
-            sortOptions[sortByAmount] = sortAmountOrder === "asc" ? 1 : -1;
+        if (allowedFields.includes(sortByAmount)) {
+            sortOptions[sortByAmount] = (sortAmountOrder === "asc") ? 1 : -1;
         }
 
         let query = expenseModel.find(filters).sort(sortOptions)
 
-        if (limit) {
-            query = query.limit(Number(limit));
-        }
-
         const expenses = await query;
-        res.status(200).json({ expenses, count: expenses.length })
+        const totalExpenses = expenses
+            .filter(e => e.type === "expense")
+            .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+        const totalIncome = expenses
+            .filter(e => e.type === "income")
+            .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+        const totalSavings = expenses
+            .filter(e => e.type === "savings")
+            .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+        res.status(200).json({ expenses, count: expenses.length,totalExpenses,totalIncome,totalSavings })
     }
     catch (error) {
         return res.status(500).json({ message: error.message })
