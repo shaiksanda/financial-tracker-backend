@@ -131,7 +131,7 @@ module.exports.getDeliveryData = async (req, res, next) => {
 
         const totalTrips = deliveryRecords.length
         const totalKms = Number(deliveryRecords.reduce((sum, item) => sum + (item.distance || 0), 0)).toFixed(2)
-        const totalEarnings = Number(deliveryRecords.reduce((sum, item) => sum + (item.totalEarnings || 0), 0)).toFixed(2)
+        const totalEarnings = Number(deliveryRecords.reduce((sum, item) => sum + (item.earnings || 0), 0)).toFixed(2)
         const totalPetrolCost = Number(deliveryRecords.reduce((sum, item) => sum + (item.petrolCostPerDelivery || 0), 0)).toFixed(2)
 
         if (deliveryRecords.length === 0) {
