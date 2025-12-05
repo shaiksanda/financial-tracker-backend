@@ -6,15 +6,11 @@ module.exports.getDeliveryAnalytics = async (req, res) => {
         const userId = req.user._id
         let days = Number(req.query.days) || 7;
 
-
-        const filters = { userId }
         const endDate = new Date();
         endDate.setUTCHours(0, 0, 0, 0);
 
         const startDate = new Date(endDate);
-        startDate.setUTCDate(startDate.getUTCDate() - days);
-
-        if (days) filters.date = { $gte: startDate, $lte: endDate }
+        startDate.setUTCDate(startDate.getUTCDate() - (days-1));
 
         const tripData = await Delivery.aggregate([
             {
