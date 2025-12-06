@@ -40,12 +40,43 @@ module.exports.getDashboard = async (req, res) => {
             ])
         ]);
 
+        const financeMap = new Map()
+        financeData.forEach(each => {
+            const dateStr = each.date.toISOString().slice(0, 10)
+            financeMap.set(dateStr, {
+                totalExpenses: each.totalExpenses,
+                totalIncome: each.totalIncome,
+                totalSavings: each.totalSavings
+            })
+        })
+
+        let dashboardData=[]
+
+        for (let d=new Date(startDate);d<=endDate;d.setDate(d.getDate()+1)){
+            const dateClone = new Date(d);
+            const dateStr = dateClone.toISOString().slice(0, 10)
+            const data=financeMap.get(dateStr) || {
+                totalExpenses:0,
+                totalIncome:0,
+                totalSavings:0
+            }
+
+            dashboardData.push(
+                {date:dateStr,totalExpenses:data.totalExpenses,
+                    totalIncome:data.totalIncome,
+                    totalSavings:data.totalSavings
+                }
+            )
+
+        }
+
+
         const totalIncome = typeData?.find(t => t.type === "income")?.total || 0;
         const totalExpenses = typeData?.find(t => t.type === "expense")?.total || 0;
         const totalSavings = typeData?.find(t => t.type === "savings")?.total || 0;
 
 
-        res.status(200).json({ financeData, categoryData, typeData,totals:{totalExpenses,totalIncome,totalSavings} });
+        res.status(200).json({ dashboardData, categoryData, typeData, totals: { totalExpenses, totalIncome, totalSavings } });
 
 
 
