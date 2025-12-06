@@ -40,7 +40,7 @@ module.exports.addDelivery = async (req, res, next) => {
 module.exports.updateDelivery = async (req, res, next) => {
     try {
         const deliveryId = req.params.id
-        const { timeTaken, dropLocation, distance, earnings, status, date, notes } = req.body
+        const { timeTaken, dropLocation, distance, earnings, status, date, notes,customerName } = req.body
         const userId = req.user._id
 
         const updatedDelivery = {}
@@ -51,6 +51,7 @@ module.exports.updateDelivery = async (req, res, next) => {
         if (status !== undefined) updatedDelivery.status = status;
         if (date !== undefined) updatedDelivery.date = date;
         if (notes !== undefined) updatedDelivery.notes = notes;
+        if(customerName!==undefined) updatedDelivery.customerName=customerName
 
         const updated = await Delivery.findByIdAndUpdate({ _id: deliveryId, userId }, updatedDelivery, { new: true })
         if (!updated) {
