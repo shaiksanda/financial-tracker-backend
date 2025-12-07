@@ -50,21 +50,23 @@ module.exports.getDashboard = async (req, res) => {
             })
         })
 
-        let dashboardData=[]
+        let dashboardData = []
 
-        for (let d=new Date(startDate);d<=endDate;d.setDate(d.getDate()+1)){
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
             const dateClone = new Date(d);
             const dateStr = dateClone.toISOString().slice(0, 10)
-            const data=financeMap.get(dateStr) || {
-                totalExpenses:0,
-                totalIncome:0,
-                totalSavings:0
+            const data = financeMap.get(dateStr) || {
+                totalExpenses: 0,
+                totalIncome: 0,
+                totalSavings: 0
             }
 
             dashboardData.push(
-                {date:dateStr,totalExpenses:data.totalExpenses,
-                    totalIncome:data.totalIncome,
-                    totalSavings:data.totalSavings
+                {
+                    date: dateStr, 
+                    totalExpenses: Number(data.totalExpenses.toFixed(2)),
+                    totalIncome: Number(data.totalIncome.toFixed(2)),
+                    totalSavings: Number(data.totalSavings.toFixed(2))
                 }
             )
 

@@ -10,7 +10,7 @@ module.exports.getDeliveryAnalytics = async (req, res) => {
         endDate.setUTCHours(0, 0, 0, 0);
 
         const startDate = new Date(endDate);
-        startDate.setUTCDate(startDate.getUTCDate() - (days-1));
+        startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
 
         const tripData = await Delivery.aggregate([
             {
@@ -50,12 +50,13 @@ module.exports.getDeliveryAnalytics = async (req, res) => {
             };
             analyticsData.push({
                 date: dateStr,
-                totalTrips: data.totalTrips,
-                totalDistance: data.totalDistance,
-                totalEarnings: data.totalEarnings,
-                totalPetrolCost: data.totalPetrolCost,
-                totalTimeTaken: data.totalTimeTaken
+                totalTrips: Number(data.totalTrips.toFixed(2)),
+                totalDistance: Number(data.totalDistance.toFixed(2)),
+                totalEarnings: Number(data.totalEarnings.toFixed(2)),
+                totalPetrolCost: Number(data.totalPetrolCost.toFixed(2)),
+                totalTimeTaken: Number(data.totalTimeTaken.toFixed(2))
             });
+
         }
 
         res.status(200).json({ analytics: analyticsData })
